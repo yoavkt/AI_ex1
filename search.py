@@ -59,6 +59,42 @@ class SearchProblem:
      util.raiseNotDefined()
            
 
+def make_path_to_root(graph, end):
+  """
+    graph:  a dictionary whose keys are tuples (x,y) of integers and values are lists of tuples given by getSuccessors()
+    return: returns a list of actions that lead pacman from the root of the search tree to the given end node
+  """
+
+  path = []
+  end_while = False
+
+  debug_counter = 0
+
+
+  # add removal of values from graph dictionary?
+  while end_while==False:
+    end_while=True
+    for k in graph.keys():
+      for val in graph[k]:
+        if val[0]==end:
+          end_while = False
+          path.insert(0,val[1])
+          new_end = k
+
+          if debug_counter<12: #DEBUG
+            print graph
+            print 'k: ' + str(k) + '\n'
+            print 'val: ' + str(val) + '\n' 
+            print 'path: ' + str(path) + '\n'
+            print 'end: ' +str(end) + '\n'
+            print 'new_end: ' + str(new_end) +'\n'
+            debug_counter+=1
+
+    end = new_end
+  
+  return path
+
+
 def tinyMazeSearch(problem):
   """
   Returns a sequence of moves that solves tinyMaze.  For any other
@@ -70,23 +106,30 @@ def tinyMazeSearch(problem):
   return  [s,s,w,s,w,w,s,w]
 
 def depthFirstSearch(problem):
-  fringe=[problem.getStartState()]
-  closed=[]
-  vertices=[problem.getStartState()]
-  edges=[]
-  path=[]
-
+  from game import Directions
+  n = Directions.NORTH
+  e = Directions.EAST
+  s = Directions.SOUTH
+  w = Directions.WEST
+  
+  fringe = [problem.getStartState()]
+  closed = [problem.getStartState()]
+  graph = {}
+  
   while fringe.count>0:
-      current=fringe.pop()
-      if problem.isGoalState(current) :
-          return path
-      if current not in closed:
-          succ = problem.getSuccessors(current)
-          for s in succ:
-              vertices.append(s[0])
-              fringe.append(s[0])
-              edges.append((current,s[0]))
-          closed.append(current)          
+    current=fringe.pop()
+    graph[current]=[] #create new node
+    if problem.isGoalState(current):
+      return make_path_to_root(graph,current)
+    else:    
+      successors = problem.getSuccessors(current)
+      for succ in successors:
+        if succ[0] not in closed:
+          fringe.append(succ[0])
+          closed.append(succ[0])
+          graph[current].append(succ)
+
+
 
 
   """
