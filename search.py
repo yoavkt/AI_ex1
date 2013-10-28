@@ -12,6 +12,7 @@ by Pacman agents (in searchAgents.py).
 """
 
 import util
+from game import Directions
 
 class SearchProblem:
   """
@@ -33,6 +34,7 @@ class SearchProblem:
     
      Returns True if and only if the state is a valid goal state
      """
+     
      util.raiseNotDefined()
 
   def getSuccessors(self, state):
@@ -68,6 +70,25 @@ def tinyMazeSearch(problem):
   return  [s,s,w,s,w,w,s,w]
 
 def depthFirstSearch(problem):
+  fringe=[problem.getStartState()]
+  closed=[]
+  vertices=[problem.getStartState()]
+  edges=[]
+  path=[]
+
+  while fringe.count>0:
+      current=fringe.pop()
+      if problem.isGoalState(current) :
+          return path
+      if current not in closed:
+          succ = problem.getSuccessors(current)
+          for s in succ:
+              vertices.append(s[0])
+              fringe.append(s[0])
+              edges.append((current,s[0]))
+          closed.append(current)          
+
+
   """
   Search the deepest nodes in the search tree first [p 85].
   
