@@ -105,14 +105,13 @@ def tinyMazeSearch(problem):
   w = Directions.WEST
   return  [s,s,w,s,w,w,s,w]
 
-def depthFirstSearch(problem):
+def graphSearch(problem, fringe):
   from game import Directions
   n = Directions.NORTH
   e = Directions.EAST
   s = Directions.SOUTH
   w = Directions.WEST
-  
-  fringe = [problem.getStartState()]
+  fringe.push(problem.getStartState())
   closed = [problem.getStartState()]
   graph = {}
   
@@ -125,13 +124,13 @@ def depthFirstSearch(problem):
       successors = problem.getSuccessors(current)
       for succ in successors:
         if succ[0] not in closed:
-          fringe.append(succ[0])
+          fringe.push(succ[0])
           closed.append(succ[0])
           graph[current].append(succ)
-
-
-
-
+    
+def depthFirstSearch(problem):
+  ds= util.Stack()
+  return graphSearch(problem, ds)
   """
   Search the deepest nodes in the search tree first [p 85].
   
@@ -149,8 +148,8 @@ def depthFirstSearch(problem):
   util.raiseNotDefined()
 
 def breadthFirstSearch(problem):
-  "Search the shallowest nodes in the search tree first. [p 81]"
-  "*** YOUR CODE HERE ***"
+  ds= util.Queue()
+  return graphSearch(problem, ds)
   util.raiseNotDefined()
       
 def uniformCostSearch(problem):
