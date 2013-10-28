@@ -115,7 +115,7 @@ def graphSearch(problem, fringe):
   closed = [problem.getStartState()]
   graph = {}
   
-  while fringe.count>0:
+  while not fringe.isEmpty():
     current=fringe.pop()
     graph[current]=[] #create new node
     if problem.isGoalState(current):
@@ -127,7 +127,7 @@ def graphSearch(problem, fringe):
           fringe.push(succ[0])
           closed.append(succ[0])
           graph[current].append(succ)
-    
+
 def depthFirstSearch(problem):
   ds= util.Stack()
   return graphSearch(problem, ds)
