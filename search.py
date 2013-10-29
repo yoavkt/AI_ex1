@@ -59,7 +59,7 @@ class SearchProblem:
      util.raiseNotDefined()
            
 
-def make_path_to_root(graph, end):
+def makePathToRoot(graph, end):
   """
     graph:  a dictionary whose keys are tuples (x,y) of integers and values are lists of tuples given by getSuccessors()
     return: returns a list of actions that lead pacman from the root of the search tree to the given end node
@@ -80,15 +80,6 @@ def make_path_to_root(graph, end):
           end_while = False
           path.insert(0,val[1])
           new_end = k
-
-          if debug_counter<12: #DEBUG
-            print graph
-            print 'k: ' + str(k) + '\n'
-            print 'val: ' + str(val) + '\n' 
-            print 'path: ' + str(path) + '\n'
-            print 'end: ' +str(end) + '\n'
-            print 'new_end: ' + str(new_end) +'\n'
-            debug_counter+=1
 
     end = new_end
   
@@ -116,10 +107,10 @@ def graphSearch(problem, fringe):
   graph = {}
   
   while not fringe.isEmpty():
-    current=fringe.pop()
-    graph[current]=[] #create new node
+    current = fringe.pop()
+    graph[current] = [] #create new node
     if problem.isGoalState(current):
-      return make_path_to_root(graph,current)
+      return makePathToRoot(graph,current)
     else:    
       successors = problem.getSuccessors(current)
       for succ in successors:
@@ -129,8 +120,8 @@ def graphSearch(problem, fringe):
           graph[current].append(succ)
 
 def depthFirstSearch(problem):
-  ds= util.Stack()
-  return graphSearch(problem, ds)
+  frindge = util.Stack()
+  return graphSearch(problem, frindge)
   """
   Search the deepest nodes in the search tree first [p 85].
   
@@ -145,18 +136,17 @@ def depthFirstSearch(problem):
   print "Start's successors:", problem.getSuccessors(problem.getStartState())
   """
   "*** YOUR CODE HERE ***"
-  util.raiseNotDefined()
+  
 
 def breadthFirstSearch(problem):
-  ds= util.Queue()
-  return graphSearch(problem, ds)
-  util.raiseNotDefined()
+  frindge = util.Queue()
+  return graphSearch(problem, frindge)
+  
       
 def uniformCostSearch(problem):
-  "Search the node of least total cost first. "
-  "*** YOUR CODE HERE ***"
-  util.raiseNotDefined()
-
+  frindge = util.PriorityQueueWithFunction(lambda x : util.manhattanDistance(problem.getStartState(),x))
+  return graphSearch(problem, frindge)
+  
 def nullHeuristic(state, problem=None):
   """
   A heuristic function estimates the cost from the current state to the nearest
