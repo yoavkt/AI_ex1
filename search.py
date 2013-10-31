@@ -106,8 +106,9 @@ def breadthFirstSearch(problem):
   
       
 def uniformCostSearch(problem):
-  fringe = util.PriorityQueueWithFunction(lambda state_cost_pair : state_cost_pair[1])
-  return graphSearch(problem, fringe)
+  #fringe = util.PriorityQueueWithFunction(lambda state_cost_pair : state_cost_pair[1])
+  #return graphSearch(problem, fringe)
+  return aStarSearch(problem)
   
 def nullHeuristic(state, problem=None):
   """
