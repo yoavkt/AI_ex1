@@ -59,32 +59,6 @@ class SearchProblem:
      util.raiseNotDefined()
            
 
-def makePathToRoot(graph, end):
-  """
-    graph:  a dictionary whose keys are tuples (x,y) of integers and values are lists of tuples given by getSuccessors()
-    return: returns a list of actions that lead pacman from the root of the search tree to the given end node
-  """
-
-  path = []
-  end_while = False
-
-  debug_counter = 0
-
-
-  # add removal of values from graph dictionary?
-  while end_while==False:
-    end_while=True
-    for k in graph.keys():
-      for val in graph[k]:
-        if val[0]==end:
-          end_while = False
-          path.insert(0,val[1])
-          new_end = k
-
-    end = new_end
-  
-  return path
-
 
 def tinyMazeSearch(problem):
   """
@@ -97,55 +71,43 @@ def tinyMazeSearch(problem):
   return  [s,s,w,s,w,w,s,w]
 
 def graphSearch(problem, fringe):
-  from game import Directions
-  n = Directions.NORTH
-  e = Directions.EAST
-  s = Directions.SOUTH
-  w = Directions.WEST
-  fringe.push(problem.getStartState())
-  closed = [problem.getStartState()]
-  graph = {}
+  start_state = problem.getStartState()
+  fringe.push((start_state,0))
+  closed = []
+  tree = Graph()
   
   while not fringe.isEmpty():
     current = fringe.pop()
-    graph[current] = [] #create new node
-    if problem.isGoalState(current):
-      return makePathToRoot(graph,current)
-    else:    
-      successors = problem.getSuccessors(current)
+    current_state = current[0]
+    current_cost = current[1]
+
+    if problem.isGoalState(current_state):
+      return tree.pathFromTo(start_state,current_state)
+
+    if current_state not in closed:
+      successors = problem.getSuccessors(current_state)
       for succ in successors:
-        if succ[0] not in closed:
-          fringe.push(succ[0])
-          closed.append(succ[0])
-          graph[current].append(succ)
+          if tree.getVertex(succ[0]) == None:
+            # Don't add an edge to a vertix already in the graph
+            tree.addEdge(current_state,succ[0],succ[1:])
+            fringe.push((succ[0],current_cost+succ[2]))
+          
+      closed.append(current_state)
+
 
 def depthFirstSearch(problem):
-  frindge = util.Stack()
-  return graphSearch(problem, frindge)
-  """
-  Search the deepest nodes in the search tree first [p 85].
-  
-  Your search algorithm needs to return a list of actions that reaches
-  the goal.  Make sure to implement a graph search algorithm [Fig. 3.7].
-  
-  To get started, you might want to try some of these simple commands to
-  understand the search problem that is being passed in:
-  
-  print "Start:", problem.getStartState()
-  print "Is the start a goal?", problem.isGoalState(problem.getStartState())
-  print "Start's successors:", problem.getSuccessors(problem.getStartState())
-  """
-  "*** YOUR CODE HERE ***"
+  fringe = util.Stack()
+  return graphSearch(problem, fringe)
   
 
 def breadthFirstSearch(problem):
-  frindge = util.Queue()
-  return graphSearch(problem, frindge)
+  fringe = util.Queue()
+  return graphSearch(problem, fringe)
   
       
 def uniformCostSearch(problem):
-  frindge = util.PriorityQueueWithFunction(lambda x : util.manhattanDistance(problem.getStartState(),x))
-  return graphSearch(problem, frindge)
+  fringe = util.PriorityQueueWithFunction(lambda state_cost_pair : state_cost_pair[1])
+  return graphSearch(problem, fringe)
   
 def nullHeuristic(state, problem=None):
   """
@@ -155,11 +117,94 @@ def nullHeuristic(state, problem=None):
   return 0
 
 def aStarSearch(problem, heuristic=nullHeuristic):
-  "Search the node that has the lowest combined cost and heuristic first."
-  "*** YOUR CODE HERE ***"
-  util.raiseNotDefined()
+  fringe = util.PriorityQueueWithFunction(lambda state_cost_pair : state_cost_pair[1] + heuristic(state_cost_pair[0],problem))
+  return graphSearch(problem, fringe)
     
-  
+
+
+class Graph:
+  def __init__(self):
+    self.vertList = {}
+    self.numVertices = 0
+
+  def addVertex(self,key):
+    self.numVertices = self.numVertices + 1
+    newVertex = Vertex(key)
+    self.vertList[key] = newVertex
+    return newVertex
+    
+  def getVertex(self,n):
+    if n in self.vertList:
+      return self.vertList[n]
+    else:
+      return None
+
+  def __contains__(self,n):
+    return n in self.vertList
+
+  def addEdge(self,f,t,weight=0):
+    if f not in self.vertList:
+      self.addVertex(f)
+    if t not in self.vertList:
+      self.addVertex(t)
+    self.vertList[f].addNeighbor(self.vertList[t].getId(), weight)
+    self.vertList[t].setParent(f)
+
+
+  def getVertices(self):
+    return self.vertList.keys()
+
+  def __iter__(self):
+    return iter(self.vertList.values())
+
+  def pathFromTo(self,f,t):
+    """
+    Assumes the graph is a tree!
+    """
+    path = []
+    
+    while f != t:
+      p = self.vertList[t].getParent()
+      path.insert(0,self.vertList[p].getWeight(t)[0])
+      t = p
+
+    return path
+
+
+class Vertex:
+  def __init__(self,key):
+    self.id = key
+    self.connectedTo = {}
+    self.parent = None
+
+  def addNeighbor(self,nbr,weight=0):
+    self.connectedTo[nbr] = weight
+
+  def hasNeighbor(self,nbr):
+    return self.connectedTo.has_key(nbr)
+
+  def setParent(self, parent):
+    self.parent = parent
+
+  def __str__(self):
+    return str(self.id) + ' -> ' + str([x for x in self.connectedTo])
+
+  def getConnections(self):
+    return self.connectedTo.keys()
+
+  def getId(self):
+    return self.id
+
+  def getWeight(self,nbr):
+    return self.connectedTo[nbr]  
+
+  def getParent(self):
+    return self.parent
+
+
+
+
+
 # Abbreviations
 bfs = breadthFirstSearch
 dfs = depthFirstSearch
