@@ -70,39 +70,52 @@ def tinyMazeSearch(problem):
   w = Directions.WEST
   return  [s,s,w,s,w,w,s,w]
 
-def graphSearch(problem, fringe):
-  start_state = problem.getStartState()
-  fringe.push((start_state,0))
-  closed = []
-  tree = Graph()
+def FirstSearchHelper(problem, fringe):
+  """
+    Generic helper function for BFS and DFS  
+  """
+
+  # fringe: either Queue or Stack
+  #         nodes in fringe will be (state, parent, direction)
+  # closed: dictionary {state: node tuple}
+  # path:   list of util.Directions
+  closed = {}
+  path = []
+
+  root = problem.getStartState()
+  fringe.push((root,None,Directions.STOP))
   
   while not fringe.isEmpty():
-    current = fringe.pop()
-    current_state = current[0]
-    current_cost = current[1]
+    node = fringe.pop()
+    state = node[0]
 
-    if problem.isGoalState(current_state):
-      return tree.pathFromTo(start_state,current_state)
+    if problem.isGoalState(state):
+      while node[2] != Directions.STOP:
+        path.append(node[2]) 
+        node = closed[node[1]] # Get parent node
+      path.reverse()
+      return path
 
-    if current_state not in closed:
-      successors = problem.getSuccessors(current_state)
-      for succ in successors:
-          if tree.getVertex(succ[0]) == None:
-            # Don't add an edge to a vertix already in the graph
-            tree.addEdge(current_state,succ[0],succ[1:])
-            fringe.push((succ[0],current_cost+succ[2]))
-          
-      closed.append(current_state)
+    if not state in closed:
+      closed[state] = node
+      children = problem.getSuccessors(state)
+
+      for child in children:
+        if not closed.has_key(child[0]):
+          #print 'Pushing ' +str((child[0], state, child[1]))#DEBUG
+          fringe.push((child[0], state, child[1]))
+
+  return None
 
 
 def depthFirstSearch(problem):
   fringe = util.Stack()
-  return graphSearch(problem, fringe)
+  return FirstSearchHelper(problem, fringe)
   
 
 def breadthFirstSearch(problem):
   fringe = util.Queue()
-  return graphSearch(problem, fringe)
+  return FirstSearchHelper(problem, fringe)
   
       
 def uniformCostSearch(problem):
@@ -118,91 +131,59 @@ def nullHeuristic(state, problem=None):
   return 0
 
 def aStarSearch(problem, heuristic=nullHeuristic):
-  fringe = util.PriorityQueueWithFunction(lambda state_cost_pair : state_cost_pair[1] + heuristic(state_cost_pair[0],problem))
-  return graphSearch(problem, fringe)
+  # Almost identical to FirstSearchHelper but making this really generic
+  # would have made the code really cumbersome 
+  #
+  # fringe: util.PriorityQueue() with priority f(n)=g(n)+h(n)
+  #         nodes in fringe will be (state, parent, direction)
+  # closed: dictionary {state: node tuple}
+  # path:   list of util.Directions
+  # f,c,h:  dictionaries for cost functions
+  closed = {}
+  fringe = util.PriorityQueue()
+  path = []
+  c = {}
+  h = {}
+  f = {} 
     
+  root = problem.getStartState()
+  c[root] = 0
+  h[root] = heuristic(root, problem)
+  f[root] = c[root]+h[root]
 
+  fringe.push((root, None, 'Stop'), f[root])
 
-class Graph:
-  def __init__(self):
-    self.vertList = {}
-    self.numVertices = 0
+  while not fringe.isEmpty():
+    node = fringe.pop()
+    state = node[0]
 
-  def addVertex(self,key):
-    self.numVertices = self.numVertices + 1
-    newVertex = Vertex(key)
-    self.vertList[key] = newVertex
-    return newVertex
+    if problem.isGoalState(state):
+      while node[2] != 'Stop':
+        path.append(node[2])
+        node = closed[node[1]]
+      path.reverse()
+      return path
     
-  def getVertex(self,n):
-    if n in self.vertList:
-      return self.vertList[n]
-    else:
-      return None
+    closed[state] = node
+    children = problem.getSuccessors(state)
+    childNode = None
 
-  def __contains__(self,n):
-    return n in self.vertList
+    for child in children:
+      if child[0] not in closed:
+        c_child = c[state] + child[2]
+      
+        if not h.has_key(child[0]):
+          h[child[0]] = heuristic(child[0], problem)
 
-  def addEdge(self,f,t,weight=0):
-    if f not in self.vertList:
-      self.addVertex(f)
-    if t not in self.vertList:
-      self.addVertex(t)
-    self.vertList[f].addNeighbor(self.vertList[t].getId(), weight)
-    self.vertList[t].setParent(f)
+        if (not c.has_key(child[0])) or (c_child < c[child[0]]): 
+          # node never checked or current path is better
+          c[child[0]] = c_child
+          f[child[0]] = c[child[0]] + h[child[0]]
+          childNode = (child[0], state, child[1])
+          fringe.push(childNode, f[child[0]])
 
-
-  def getVertices(self):
-    return self.vertList.keys()
-
-  def __iter__(self):
-    return iter(self.vertList.values())
-
-  def pathFromTo(self,f,t):
-    """
-    Assumes the graph is a tree!
-    """
-    path = []
+  return None
     
-    while f != t:
-      p = self.vertList[t].getParent()
-      path.insert(0,self.vertList[p].getWeight(t)[0])
-      t = p
-
-    return path
-
-
-class Vertex:
-  def __init__(self,key):
-    self.id = key
-    self.connectedTo = {}
-    self.parent = None
-
-  def addNeighbor(self,nbr,weight=0):
-    self.connectedTo[nbr] = weight
-
-  def hasNeighbor(self,nbr):
-    return self.connectedTo.has_key(nbr)
-
-  def setParent(self, parent):
-    self.parent = parent
-
-  def __str__(self):
-    return str(self.id) + ' -> ' + str([x for x in self.connectedTo])
-
-  def getConnections(self):
-    return self.connectedTo.keys()
-
-  def getId(self):
-    return self.id
-
-  def getWeight(self,nbr):
-    return self.connectedTo[nbr]  
-
-  def getParent(self):
-    return self.parent
-
-
 
 
 

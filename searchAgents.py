@@ -277,17 +277,23 @@ class CornersProblem(search.SearchProblem):
     self._expanded = 0 # Number of search nodes expanded
     
     "*** YOUR CODE HERE ***"
+    # state in CornersProblem is (current_location,corners_to_visit)
+    corners_to_visit = self.corners
     
+    #if self.startingPosition in self.corners:
+    #  corners_to_visit = (self.startingPosition,)
+    self.startState = (self.startingPosition,corners_to_visit)
+
+    #print 'self.startState: ' + str(self.startState) #debug
+
+
   def getStartState(self):
     "Returns the start state (in your state space, not the full Pacman state space)"
-    corner_tuple = ()
-    if self.startingPosition in self.corners:
-      corner_tuple = (self.startingPosition,)
-    return (self.startingPosition,corner_tuple)
+    return self.startState
     
   def isGoalState(self, state):
     "Returns whether this search state is a goal state of the problem"    
-    return len(state[1])==4
+    return len(state[1])==0
 
        
   def getSuccessors(self, state):
@@ -306,23 +312,32 @@ class CornersProblem(search.SearchProblem):
 
     for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
       x,y = state[0]
+      
+      new_corners_list = [ c for c in state[1] if c!=(x,y) ]
+      new_corners_tuple = tuple(new_corners_list)
       dx, dy = Actions.directionToVector(action)
       nextx, nexty = int(x + dx), int(y + dy)
       if not self.walls[nextx][nexty]:
-        nextPosition = (nextx, nexty)
-        nextCornerTuple = state[1]
-        if (nextPosition not in nextCornerTuple) and (nextPosition in self.corners):
-          nextCornerTuple += nextPosition,
-        nextState = (nextPosition,nextCornerTuple)
+        new_pos = (nextx, nexty)
+        new_state = (new_pos, new_corners_tuple)
         cost = 1
-        successors.append( (nextState, action, cost) )
+        successors.append( (new_state, action, cost) )
         
     # Bookkeeping for display purposes
     self._expanded += 1 
     #if state not in self._visited:
     #  self._visited[state] = True
     #  self._visitedlist.append(state)
-      
+    
+    #DEBUG
+    #k=0
+    #if len(new_corners_list)!=len(state[1]):
+    #  k = 1
+    #for i in xrange(len(new_corners_list)):
+    #  if new_corners_list[i] != new_corners_tuple[i] or new_corners_list[i] != state[1][i+k] or  new_corners_tuple[i] != state[1][i+k]:
+    #    print 'corner list conversion failed:\n' + str(state[1]) + '\n'+ str(new_corners_list) + '\n'+ str(new_corners_tuple) + '\n' 
+    #print '>>>>>>>>>>>>>>>>>>>>>>>>successors: ' + str(successors) #DEBUG  
+    #DEBUG
     return successors
 
 
@@ -374,11 +389,6 @@ def cornersHeuristic(state, problem):
     min_index = dist_list.index(min_dist)
     closest_corner = corners_to_visit[min_index]
     return min_dist
-
-
-
-
-
 
   return 0 # Default to trivial solution
 
@@ -471,7 +481,13 @@ def foodHeuristic(state, problem):
   """
   position, foodGrid = state
   "*** YOUR CODE HERE ***"
-  return 0
+  
+  foodList = foodGrid.asList()
+  max_dist = 0
+  for xy in foodList:
+    max_dist = max(util.manhattanDistance(position,xy),max_dist)
+  return max_dist
+
   
 class ClosestDotSearchAgent(SearchAgent):
   "Search for all food using a sequence of searches"
@@ -494,13 +510,17 @@ class ClosestDotSearchAgent(SearchAgent):
     "Returns a path (a list of actions) to the closest dot, starting from gameState"
     # Here are some useful elements of the startState
     startPosition = gameState.getPacmanPosition()
+    #print 'startPosition: ' + str(startPosition) #DEBUG
     food = gameState.getFood()
     walls = gameState.getWalls()
     problem = AnyFoodSearchProblem(gameState)
 
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-  
+    actions = search.breadthFirstSearch(problem)
+    #print 'actions: ' + str(actions) #DEBUG
+    return actions
+
+    
 class AnyFoodSearchProblem(PositionSearchProblem):
   """
     A search problem for finding a path to any food.
@@ -535,7 +555,21 @@ class AnyFoodSearchProblem(PositionSearchProblem):
     x,y = state
     
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    #DEBUG
+    #print 'AnyFoodSearchProblem(isGoalState).self: ' + str(self)
+    #print 'AnyFoodSearchProblem(isGoalState).gameState: ' + str(state)
+    #DEBUG
+
+    food_list = self.food.asList()
+    dist_list = []
+    for i in xrange(len(food_list)):
+      food_xy = food_list[i]
+      dist_list.append(util.manhattanDistance((x,y),food_xy))
+
+    min_dist = min(dist_list)
+    min_index = dist_list.index(min_dist)
+    closest_food = food_list[min_index]
+    return (x,y) == closest_food
 
 ##################
 # Mini-contest 1 #
